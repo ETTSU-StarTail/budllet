@@ -1,4 +1,7 @@
-use bevy::prelude::{App, Commands, Component, Plugin, Query, Res, ResMut, Time, Timer, With};
+use bevy::prelude::{
+    App, Commands, Component, Plugin, Query, Res, ResMut, Resource, Time, Timer, With,
+};
+use bevy::time::TimerMode;
 use bevy::DefaultPlugins;
 
 #[derive(Component)]
@@ -7,6 +10,8 @@ struct Person;
 #[derive(Component)]
 struct Name(String);
 
+// リソースとなるデータは Resource を派生させる v0.8.0 -> v0.9.0
+#[derive(Resource)]
 struct GreetTimer(Timer);
 
 pub struct HelloPlugin;
@@ -14,7 +19,8 @@ impl Plugin for HelloPlugin {
     fn build(&self, app: &mut App) {
         app
             // Resource (グローバルなデータ)を追加
-            .insert_resource(GreetTimer(Timer::from_seconds(2.0, true)))
+            //   mode 指定がわかりやすくなった
+            .insert_resource(GreetTimer(Timer::from_seconds(2.0, TimerMode::Repeating)))
             // System をアプリケーションのスタートアップスケジュールに追加
             //   event loop の外で最初に実行される
             .add_startup_system(add_people)
@@ -26,18 +32,11 @@ impl Plugin for HelloPlugin {
 
 // System
 fn add_people(mut commands: Commands) {
-    commands
-        .spawn()
-        .insert(Person)
-        .insert(Name("Elaina Proctor".to_string()));
-    commands
-        .spawn()
-        .insert(Person)
-        .insert(Name("Renzo Hume".to_string()));
-    commands
-        .spawn()
-        .insert(Person)
-        .insert(Name("Zayna Nieves".to_string()));
+    // spawn() は廃止されたみたい。デフォルト設定(bundle)する必要有り。 v0.8.0 -> v0.9.0
+    // 以前のようにやるには spawn_empty() を使う
+    commands.spawn((Person, Name("Elaina Proctor".to_string())));
+    commands.spawn((Person, Name("Renzo Hume".to_string())));
+    commands.spawn((Person, Name("Zayba Nieves".to_string())));
 }
 
 // System
@@ -60,10 +59,10 @@ fn main() {
     // アプリケーションインスタンス作成
     App::new()
         /*
-           DefaultPlugins は下記と同等
-             .add_plugin(CorePlugin::default())
-             .add_plugin(InputPlugin::default())
-             .add_plugin(WindowPlugin::default())
+            DefaultPlugins は下記と同等
+            .add_plugin(CorePlugin::default())
+            .add_plugin(InputPlugin::default())
+            .add_plugin(WindowPlugin::default())
         */
         .add_plugins(DefaultPlugins)
         .add_plugin(HelloPlugin)
